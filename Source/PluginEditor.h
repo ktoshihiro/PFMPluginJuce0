@@ -16,14 +16,14 @@
 //==============================================================================
 /**
 */
-class PfmpluginJuce0AudioProcessorEditor  : public AudioProcessorEditor
+class PfmpluginJuce0AudioProcessorEditor : public AudioProcessorEditor
 {
 public:
-    PfmpluginJuce0AudioProcessorEditor (PfmpluginJuce0AudioProcessor&);
+    PfmpluginJuce0AudioProcessorEditor(PfmpluginJuce0AudioProcessor&);
     ~PfmpluginJuce0AudioProcessorEditor();
 
     //==============================================================================
-    void paint (Graphics&) override;
+    void paint(Graphics&) override;
     void resized() override;
 
 private:
@@ -31,5 +31,5 @@ private:
     // access the processor object that created it.
     PfmpluginJuce0AudioProcessor& processor;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PfmpluginJuce0AudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PfmpluginJuce0AudioProcessorEditor)
 };

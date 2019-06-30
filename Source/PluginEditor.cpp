@@ -12,12 +12,12 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-PfmpluginJuce0AudioProcessorEditor::PfmpluginJuce0AudioProcessorEditor (PfmpluginJuce0AudioProcessor& p)
-    : AudioProcessorEditor (&p), processor (p)
+PfmpluginJuce0AudioProcessorEditor::PfmpluginJuce0AudioProcessorEditor(PfmpluginJuce0AudioProcessor& p)
+    : AudioProcessorEditor(&p), processor(p)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (400, 300);
+    setSize(400, 300);
 }
 
 PfmpluginJuce0AudioProcessorEditor::~PfmpluginJuce0AudioProcessorEditor()
@@ -25,14 +25,14 @@ PfmpluginJuce0AudioProcessorEditor::~PfmpluginJuce0AudioProcessorEditor()
 }
 
 //==============================================================================
-void PfmpluginJuce0AudioProcessorEditor::paint (Graphics& g)
+void PfmpluginJuce0AudioProcessorEditor::paint(Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
+    g.fillAll(getLookAndFeel().findColour(ResizableWindow::backgroundColourId));
 
-    g.setColour (Colours::white);
-    g.setFont (15.0f);
-    g.drawFittedText ("Hello World!", getLocalBounds(), Justification::centred, 1);
+    g.setColour(Colours::white);
+    g.setFont(15.0f);
+    g.drawFittedText("Hello World!", getLocalBounds(), Justification::centred, 1);
 }
 
 void PfmpluginJuce0AudioProcessorEditor::resized()
