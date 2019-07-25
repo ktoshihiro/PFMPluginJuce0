@@ -26,7 +26,14 @@ public:
     void paint(Graphics&) override;
     void resized() override;
 
+    void mouseDown(const MouseEvent& e) override;
+    void mouseUp(const MouseEvent& e) override;
+    void mouseDrag(const MouseEvent& e) override;
+
 private:
+    Point<int> lastClickPos;
+    float cachedBgColor = 0.0f;
+
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     PfmpluginJuce0AudioProcessor& processor;
