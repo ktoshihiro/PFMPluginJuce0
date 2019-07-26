@@ -14,16 +14,28 @@
 //==============================================================================
 PfmpluginJuce0AudioProcessor::PfmpluginJuce0AudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
-                     #if ! JucePlugin_IsMidiEffect
-                      #if ! JucePlugin_IsSynth
-                       .withInput  ("Input",  AudioChannelSet::stereo(), true)
-                      #endif
-                       .withOutput ("Output", AudioChannelSet::stereo(), true)
-                     #endif
-                       )
+    : AudioProcessor(BusesProperties()
+#if ! JucePlugin_IsMidiEffect
+#if ! JucePlugin_IsSynth
+        .withInput("Input", AudioChannelSet::stereo(), true)
 #endif
+        .withOutput("Output", AudioChannelSet::stereo(), true)
+#endif
+    ),
+#endif
+    apvts(/* AudioProcessor& */ *this, /* UndoManager* */ nullptr)
 {
+    //shouldPlaySound = new AudioParameterBool("shouldPlaySoundParam", "shouldPlaySound", false);
+    //addParameter(shouldPlaySound);
+    auto shouldPlaySoundParam = std::make_unique<AudioParameterBool>("shouldPlaySoundParam", "shouldPlaySound", false);
+    auto* param = apvts.createAndAddParameter(std::move(shouldPlaySoundParam));
+    shouldPlaySound = dynamic_cast<AudioParameterBool*>(param);
+
+    auto pgColorParam = std::make_unique<AudioParameterFloat>("bgColorParam", "bgColor", 0.0f, 1.0f, 0.5f);
+    param = apvts.createAndAddParameter(std::move(pgColorParam));
+    bgColor = dynamic_cast<AudioParameterFloat*>(param);
+
+    apvts.state = ValueTree("PFMSynthValueTree");
 }
 
 PfmpluginJuce0AudioProcessor::~PfmpluginJuce0AudioProcessor()
@@ -38,29 +50,29 @@ const String PfmpluginJuce0AudioProcessor::getName() const
 
 bool PfmpluginJuce0AudioProcessor::acceptsMidi() const
 {
-   #if JucePlugin_WantsMidiInput
+#if JucePlugin_WantsMidiInput
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 bool PfmpluginJuce0AudioProcessor::producesMidi() const
 {
-   #if JucePlugin_ProducesMidiOutput
+#if JucePlugin_ProducesMidiOutput
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 bool PfmpluginJuce0AudioProcessor::isMidiEffect() const
 {
-   #if JucePlugin_IsMidiEffect
+#if JucePlugin_IsMidiEffect
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 double PfmpluginJuce0AudioProcessor::getTailLengthSeconds() const
@@ -79,21 +91,21 @@ int PfmpluginJuce0AudioProcessor::getCurrentProgram()
     return 0;
 }
 
-void PfmpluginJuce0AudioProcessor::setCurrentProgram (int index)
+void PfmpluginJuce0AudioProcessor::setCurrentProgram(int index)
 {
 }
 
-const String PfmpluginJuce0AudioProcessor::getProgramName (int index)
+const String PfmpluginJuce0AudioProcessor::getProgramName(int index)
 {
     return {};
 }
 
-void PfmpluginJuce0AudioProcessor::changeProgramName (int index, const String& newName)
+void PfmpluginJuce0AudioProcessor::changeProgramName(int index, const String& newName)
 {
 }
 
 //==============================================================================
-void PfmpluginJuce0AudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void PfmpluginJuce0AudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
@@ -106,33 +118,33 @@ void PfmpluginJuce0AudioProcessor::releaseResources()
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool PfmpluginJuce0AudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool PfmpluginJuce0AudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
-  #if JucePlugin_IsMidiEffect
-    ignoreUnused (layouts);
+#if JucePlugin_IsMidiEffect
+    ignoreUnused(layouts);
     return true;
-  #else
+#else
     // This is the place where you check if the layout is supported.
     // In this template code we only support mono or stereo.
     if (layouts.getMainOutputChannelSet() != AudioChannelSet::mono()
-     && layouts.getMainOutputChannelSet() != AudioChannelSet::stereo())
+        && layouts.getMainOutputChannelSet() != AudioChannelSet::stereo())
         return false;
 
     // This checks if the input layout matches the output layout
-   #if ! JucePlugin_IsSynth
+#if ! JucePlugin_IsSynth
     if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
         return false;
-   #endif
+#endif
 
     return true;
-  #endif
+#endif
 }
 #endif
 
-void PfmpluginJuce0AudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
+void PfmpluginJuce0AudioProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
     ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
+    auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     // In case we have more outputs than inputs, this code clears any output
@@ -142,7 +154,7 @@ void PfmpluginJuce0AudioProcessor::processBlock (AudioBuffer<float>& buffer, Mid
     // when they first compile a plugin, but obviously you don't need to keep
     // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+        buffer.clear(i, 0, buffer.getNumSamples());
 
     // This is the place where you'd normally do the guts of your plugin's
     // audio processing...
@@ -150,11 +162,15 @@ void PfmpluginJuce0AudioProcessor::processBlock (AudioBuffer<float>& buffer, Mid
     // the samples and the outer loop is handling the channels.
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
-
-        // ..do something to the data...
+    for (int i = 0; i < buffer.getNumSamples(); ++i) {
+        for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
+            if (shouldPlaySound->get()) {
+                buffer.setSample(channel, i, r.nextFloat());
+            }
+            else {
+                buffer.setSample(channel, i, 0);
+            }
+        }
     }
 }
 
@@ -166,21 +182,42 @@ bool PfmpluginJuce0AudioProcessor::hasEditor() const
 
 AudioProcessorEditor* PfmpluginJuce0AudioProcessor::createEditor()
 {
-    return new PfmpluginJuce0AudioProcessorEditor (*this);
+    // `this` is pointing to the active instance of the plugin processor.
+    // `this` is dereferenced, giving us the actual active instance, 
+    // which is passed to the plugin editor constructor as a reference.
+    return new PfmpluginJuce0AudioProcessorEditor(*this);
 }
 
 //==============================================================================
-void PfmpluginJuce0AudioProcessor::getStateInformation (MemoryBlock& destData)
+void PfmpluginJuce0AudioProcessor::getStateInformation(MemoryBlock& destData)
 {
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
+    DBG(apvts.state.toXmlString());
+    MemoryOutputStream mos(destData, false);
+    apvts.state.writeToStream(mos);
 }
 
-void PfmpluginJuce0AudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void PfmpluginJuce0AudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+    //MemoryBlock mb(data, static_cast<size_t>(sizeInBytes));
+    //MemoryInputStream mis(mb, false);
+    //apvts.state.readFromStream(mis);
+    ValueTree tree = ValueTree::readFromData(data, sizeInBytes);
+    if (tree.isValid()) {
+        apvts.state = tree;
+        DBG(apvts.state.toXmlString());
+    }
+}
+
+void PfmpluginJuce0AudioProcessor::UpdateAutomatableParameter(RangedAudioParameter* param, float value)
+{
+    param->beginChangeGesture();
+    param->setValueNotifyingHost(value);
+    param->endChangeGesture();
 }
 
 //==============================================================================
