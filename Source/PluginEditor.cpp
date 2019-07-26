@@ -19,6 +19,7 @@ PfmpluginJuce0AudioProcessorEditor::PfmpluginJuce0AudioProcessorEditor(Pfmplugin
     // editor's size to whatever you need it to be.
     cachedBgColor = processor.bgColor->get();
     setSize(400, 300);
+    startTimerHz(20);
 }
 
 PfmpluginJuce0AudioProcessorEditor::~PfmpluginJuce0AudioProcessorEditor()
@@ -73,6 +74,16 @@ void PfmpluginJuce0AudioProcessorEditor::mouseDrag(const MouseEvent& e)
     */
     DBG("diffY: " << diffY);
     PfmpluginJuce0AudioProcessor::UpdateAutomatableParameter(processor.bgColor, diffY);
+    Update();
+}
+
+void PfmpluginJuce0AudioProcessorEditor::timerCallback()
+{
+    Update();
+}
+
+void PfmpluginJuce0AudioProcessorEditor::Update()
+{
     cachedBgColor = processor.bgColor->get();
     repaint();
 }

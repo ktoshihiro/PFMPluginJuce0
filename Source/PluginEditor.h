@@ -16,7 +16,7 @@
 //==============================================================================
 /**
 */
-class PfmpluginJuce0AudioProcessorEditor : public AudioProcessorEditor
+class PfmpluginJuce0AudioProcessorEditor : public AudioProcessorEditor, public Timer
 {
 public:
     PfmpluginJuce0AudioProcessorEditor(PfmpluginJuce0AudioProcessor&);
@@ -29,6 +29,9 @@ public:
     void mouseDown(const MouseEvent& e) override;
     void mouseUp(const MouseEvent& e) override;
     void mouseDrag(const MouseEvent& e) override;
+    void timerCallback() override;
+
+    void Update();
 
 private:
     Point<int> lastClickPos;

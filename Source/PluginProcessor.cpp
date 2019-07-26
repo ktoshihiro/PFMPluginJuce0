@@ -203,9 +203,14 @@ void PfmpluginJuce0AudioProcessor::setStateInformation(const void* data, int siz
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
-    MemoryBlock mb(data, static_cast<size_t>(sizeInBytes));
-    MemoryInputStream mis(mb, false);
-    apvts.state.readFromStream(mis);
+    //MemoryBlock mb(data, static_cast<size_t>(sizeInBytes));
+    //MemoryInputStream mis(mb, false);
+    //apvts.state.readFromStream(mis);
+    ValueTree tree = ValueTree::readFromData(data, sizeInBytes);
+    if (tree.isValid()) {
+        apvts.state = tree;
+        DBG(apvts.state.toXmlString());
+    }
 }
 
 void PfmpluginJuce0AudioProcessor::UpdateAutomatableParameter(RangedAudioParameter* param, float value)
